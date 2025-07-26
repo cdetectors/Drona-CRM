@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, ChevronDown, Settings, Moon, Sun, Bell, HelpCircle, LogOut, Search, Menu, X } from 'lucide-react';
+import { User, ChevronDown, Settings, Moon, Sun, Bell, HelpCircle, LogOut, Search, Menu, X, ArrowRight } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Cases from './components/Cases';
@@ -19,15 +19,54 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [darkMode, setDarkMode] = useState(false);
+
+  // Search data for navigation
+  const searchableItems = [
+    { id: 'dashboard', title: 'Dashboard', description: 'Overview and key metrics', keywords: ['overview', 'stats', 'metrics', 'home'] },
+    { id: 'cases', title: 'Cases', description: 'Manage cyber forensics cases', keywords: ['forensics', 'investigations', 'evidence', 'mobile analysis', 'cyber fraud'] },
+    { id: 'courses', title: 'Courses', description: 'SOC and CEH training programs', keywords: ['training', 'education', 'soc', 'ceh', 'students', 'enrollment'] },
+    { id: 'sales', title: 'Sales Funnel', description: 'Track leads and opportunities', keywords: ['leads', 'opportunities', 'pipeline', 'deals', 'conversion'] },
+    { id: 'analytics', title: 'Analytics', description: 'Business insights and reports', keywords: ['insights', 'data', 'charts', 'performance', 'trends'] },
+    { id: 'contacts', title: 'Contacts', description: 'Manage clients and students', keywords: ['clients', 'customers', 'students', 'people', 'directory'] },
+    { id: 'documents', title: 'Documents', description: 'File management and storage', keywords: ['files', 'storage', 'evidence', 'reports', 'uploads'] },
+    { id: 'marketing', title: 'Marketing', description: 'Campaigns and lead generation', keywords: ['campaigns', 'advertising', 'promotion', 'leads', 'social media'] },
+    { id: 'incident-response', title: 'Incident Response', description: 'Security incident management', keywords: ['security', 'incidents', 'breaches', 'response', 'alerts'] },
+    { id: 'communications', title: 'Communications', description: 'Team messaging and collaboration', keywords: ['messages', 'chat', 'team', 'collaboration', 'discussions'] },
+    { id: 'knowledge-base', title: 'Knowledge Base', description: 'Documentation and procedures', keywords: ['docs', 'procedures', 'guides', 'help', 'wiki', 'sop'] },
+    { id: 'audit-logs', title: 'Audit Logs', description: 'System activity and compliance', keywords: ['logs', 'activity', 'compliance', 'history', 'tracking'] },
+    { id: 'reports', title: 'Reports', description: 'Generate business reports', keywords: ['export', 'pdf', 'analysis', 'summary', 'data export'] }
+  ];
 
   const notifications = [
     { id: 1, title: 'New case assigned', message: 'Case C001 has been assigned to you', time: '5 min ago', unread: true },
     { id: 2, title: 'Course enrollment', message: 'New student enrolled in SOC course', time: '1 hour ago', unread: true },
     { id: 3, title: 'Payment received', message: 'Payment of $2,999 received from John Doe', time: '2 hours ago', unread: false },
   ];
+
+  // Filter search results
+  const searchResults = searchQuery.trim() 
+    ? searchableItems.filter(item => 
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.keywords.some(keyword => keyword.toLowerCase().includes(searchQuery.toLowerCase()))
+      ).slice(0, 6) // Limit to 6 results
+    : [];
+
+  const handleSearchSelect = (itemId: string) => {
+    setActiveTab(itemId);
+    setSearchQuery('');
+    setShowSearchResults(false);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setShowSearchResults(value.trim().length > 0);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -88,9 +127,47 @@ function App() {
                   type="text"
                   placeholder="Search cases, contacts, courses..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
+                  onFocus={() => searchQuery.trim() && setShowSearchResults(true)}
                   className="pl-10 pr-4 py-2 w-80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                 />
+                
+                {/* Search Results Dropdown */}
+                {showSearchResults && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-50 max-h-80 overflow-y-auto">
+                    <div className="px-3 py-2 text-xs font-medium text-slate-500 uppercase tracking-wide border-b border-slate-200">
+                      Search Results ({searchResults.length})
+                    </div>
+                    {searchResults.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleSearchSelect(item.id)}
+                        className="w-full px-4 py-3 text-left hover:bg-slate-50 flex items-center justify-between group transition-colors"
+                      >
+                        <div className="flex-1">
+                          <div className="font-medium text-slate-900 group-hover:text-cyan-600 transition-colors">
+                            {item.title}
+                          </div>
+                          <div className="text-sm text-slate-600 mt-1">
+                            {item.description}
+                          </div>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-cyan-600 transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* No Results */}
+                {showSearchResults && searchQuery.trim() && searchResults.length === 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-slate-200 py-4 z-50">
+                    <div className="px-4 text-center text-slate-500">
+                      <Search className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                      <p className="text-sm">No results found for "{searchQuery}"</p>
+                      <p className="text-xs mt-1">Try searching for cases, courses, contacts, or other sections</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -214,12 +291,13 @@ function App() {
       </main>
       
       {/* Click outside handlers */}
-      {(showProfileMenu || showNotifications) && (
+      {(showProfileMenu || showNotifications || showSearchResults) && (
         <div 
           className="fixed inset-0 z-30" 
           onClick={() => {
             setShowProfileMenu(false);
             setShowNotifications(false);
+            setShowSearchResults(false);
           }}
         />
       )}
